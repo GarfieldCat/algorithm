@@ -19,14 +19,16 @@ public class RedBlackTree<T extends Comparable<T>> {
         }
     }
 
-    enum Color {
+    private enum Color {
         Red, Black;
     }
 
     private Node<T> root;
+    private final Node<T> nilNode;
 
     public RedBlackTree() {
         this.root = null;
+        this.nilNode = new Node<>(null);
     }
 
     public void printTree() {
@@ -60,6 +62,55 @@ public class RedBlackTree<T extends Comparable<T>> {
             }
         }
     }
+
+    private Node<T> find(T value, Node<T> node) {
+        while (true) {
+            if (node == null) return null;
+            int compareResult = node.value.compareTo(value);
+
+            if (compareResult == 0) return node;
+            if (compareResult > 0) {
+                node = node.left;
+            } else {
+                node = node.right;
+            }
+        }
+    }
+
+    public T min() {
+        Node<T> result = min(root);
+        return result == null ? null : result.value;
+    }
+
+    private Node<T> min(Node<T> node) {
+        if (node == null) return null;
+
+        while (true) {
+            if (node.left == null) {
+                return node;
+            } else {
+                node = node.left;
+            }
+        }
+    }
+
+    public T max() {
+        Node<T> result = max(root);
+        return result == null ? null : result.value;
+    }
+
+    private Node<T> max(Node<T> node) {
+        if (node == null) return null;
+
+        while (true) {
+            if (node.right == null) {
+                return node;
+            } else {
+                node = node.right;
+            }
+        }
+    }
+
 
     public boolean insert(T value) {
         Node<T> newNode = new Node<>(value);
@@ -217,4 +268,123 @@ public class RedBlackTree<T extends Comparable<T>> {
         return rightNode;
     }
 
+    public void clearTree() {
+        this.root = null;
+    }
+
+    public boolean delete(T value) {
+        Node<T> deleteNode = find(value, root);
+        if (deleteNode == null) return false;
+
+        Node<T> targetNode = deleteNode;
+        Node<T> fixNode;
+
+        if (deleteNode.left != null && deleteNode.right != null) {
+            targetNode = this.min(deleteNode.right);
+        }
+        if (targetNode.left != null) {
+            fixNode = targetNode.left;
+        } else {
+            fixNode = targetNode.right;
+            if(fixNode == null){
+                fixNode = nilNode;
+                fixNode.parent = targetNode;
+                targetNode.right = fixNode;
+            }
+        }
+        transplant(targetNode, fixNode);
+
+        if (deleteNode != targetNode) {
+            deleteNode.value = targetNode.value;
+            targetNode.value = null;
+        }
+
+        if (targetNode.color == Color.Black) {
+            deleteFixTree(fixNode);
+        }
+
+        if(fixNode == null){
+            transplant(nilNode, null);
+        }
+
+        return true;
+    }
+
+    /**
+     * remove the target node
+     */
+    private void transplant(Node<T> target, Node<T> with) {
+        if (target.parent == null) {
+            root = with;
+        } else if (target == target.parent.left) {
+            target.parent.left = with;
+        } else {
+            target.parent.right = with;
+        }
+        if (with != null) {
+            with.parent = target.parent;
+        }
+    }
+
+    private void deleteFixTree(Node<T> fixNode) {
+        Node<T> brotherNode;
+
+        while (fixNode != root && fixNode.color == Color.Black) {
+            if (fixNode == fixNode.parent.left) {
+                brotherNode = fixNode.parent.right;
+
+                if (brotherNode.color == Color.Red) {
+                    brotherNode.color = Color.Black;
+                    fixNode.parent.color = Color.Red;
+                    rotateAnticlockwise(fixNode.parent);
+                    brotherNode = fixNode.parent.right;
+                }
+                if ((brotherNode.left == null || brotherNode.left.color == Color.Black)
+                        && (brotherNode.right == null || brotherNode.right.color == Color.Black)) {
+                    brotherNode.color = Color.Red;
+                    fixNode = fixNode.parent;
+                } else {
+                    if (brotherNode.right == null || brotherNode.right.color == Color.Black) {
+                        brotherNode.color = Color.Red;
+                        brotherNode.left.color = Color.Black;
+                        rotateClockwise(brotherNode);
+                        brotherNode = fixNode.parent.right;
+                    }
+                    brotherNode.color = fixNode.parent.color;
+                    fixNode.parent.color = Color.Black;
+                    brotherNode.right.color = Color.Black;
+                    rotateAnticlockwise(fixNode.parent);
+                    fixNode = root;
+                }
+            } else {
+                brotherNode = fixNode.parent.left;
+
+                if (brotherNode.color == Color.Red) {
+                    brotherNode.color = Color.Black;
+                    fixNode.parent.color = Color.Red;
+                    rotateClockwise(fixNode.parent);
+                    brotherNode = fixNode.parent.left;
+                }
+                if ((brotherNode.left == null || brotherNode.left.color == Color.Black)
+                        && (brotherNode.right == null || brotherNode.right.color == Color.Black)) {
+                    brotherNode.color = Color.Red;
+                    fixNode = fixNode.parent;
+                } else {
+                    if (brotherNode.left == null || brotherNode.left.color == Color.Black) {
+                        brotherNode.color = Color.Red;
+                        brotherNode.right.color = Color.Black;
+                        rotateClockwise(brotherNode);
+                        brotherNode = fixNode.parent.left;
+                    }
+                    brotherNode.color = fixNode.parent.color;
+                    fixNode.parent.color = Color.Black;
+                    brotherNode.left.color = Color.Black;
+                    rotateClockwise(fixNode.parent);
+                    fixNode = root;
+                }
+            }
+        }
+
+        fixNode.color = Color.Black;
+    }
 }

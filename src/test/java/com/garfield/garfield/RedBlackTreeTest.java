@@ -4,6 +4,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * http://www.codebytes.in/2014/10/red-black-tree-java-implementation.html
+ * https://www.jianshu.com/p/84416644c080
+ */
 public class RedBlackTreeTest {
 
     @Test
@@ -15,8 +19,13 @@ public class RedBlackTreeTest {
 
         for (Integer i : array) {
             tree.insert(i);
-            System.out.println(i + " has inserted");
         }
+        tree.printTree();
+
+        System.out.println("The test begin!-----------------------");
+
+        tree.delete(2);
+
         tree.printTree();
 
 
